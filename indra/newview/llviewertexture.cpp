@@ -518,7 +518,12 @@ void LLViewerTexture::updateClass()
     // Viewer can 'overshoot' target when scene changes, if viewer goes over budget it
     // can negatively impact performance, so leave 20% of a breathing room for
     // 'bias' calculation to kick in.
-    F32 target = llmax(llmin(budget - 512.f, budget * 0.8f), MIN_VRAM_BUDGET);
+    // An explicitly set budget is honored below the automatic floor:
+    // MIN_VRAM_BUDGET assumes discrete-VRAM-class hardware, but on
+    // integrated GPUs "VRAM" is system memory and low-memory machines
+    // need to be able to set a smaller texture residency target.
+    F32 min_target = max_vram_budget != 0 ? 256.f : MIN_VRAM_BUDGET;
+    F32 target = llmax(llmin(budget - 512.f, budget * 0.8f), min_target);
     sFreeVRAMMegabytes = target - used;
 
     F32 over_pct = (used - target) / target;
