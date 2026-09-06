@@ -2648,12 +2648,21 @@ void LLViewerMediaImpl::navigateInternal(bool should_log)
     {
         if (should_log)
         {
+            // A real navigation to a new URL arrived while a probe for a
+            // previous URL is still in flight (e.g. for a bogus or
+            // unresponsive URL). Cancel it so that this navigation is not
+            // stalled; the canceled probe's coroutine detects that it was
+            // superseded and stands down.
+            LL_WARNS() << "Canceling in-flight MIME type probe for the new navigation." << LL_ENDL;
+            cancelMimeTypeProbe();
+        }
+        else
+        {
             // media periodically suspends and unsuspends (should_log == false),
             // unsuspend calls this function, it's epxected that sometimes
             // unsuspend will be attempted while a probe is in flight.
-            LL_WARNS() << "MIME type probe already in progress -- bailing out." << LL_ENDL;
+            return;
         }
-        return;
     }
 
     if(mNavigateServerRequest)
@@ -2739,11 +2748,23 @@ void LLViewerMediaImpl::mimeDiscoveryCoro(std::string url)
 
     httpOpts->setFollowRedirects(true);
     httpOpts->setHeadersOnly(true);
+    // A MIME probe is only metadata for what is usually an interactive
+    // navigation; bound it so a bogus or unresponsive URL cannot stall the
+    // browser for the full default policy timeout.
+    httpOpts->setTimeout(15);
 
     httpHeaders->append(HTTP_OUT_HEADER_ACCEPT, "*/*");
     httpHeaders->append(HTTP_OUT_HEADER_COOKIE, "");
 
     LLSD result = httpAdapter->getRawAndSuspend(httpRequest, url, httpOpts, httpHeaders);
+
+    if (mMimeProbe.lock() != httpAdapter)
+    {
+        // This probe was superseded by a newer navigation (see
+        // navigateInternal()); the newer probe owns media initialization now.
+        this->unref();
+        return;
+    }
 
     mMimeProbe.reset();
 
@@ -2752,7 +2773,7 @@ void LLViewerMediaImpl::mimeDiscoveryCoro(std::string url)
 
     if (!status)
     {
-        LL_WARNS() << "Error retrieving media headers." << LL_ENDL;
+        LL_WARNS() << "Error retrieving media headers, status: " << status.toString() << LL_ENDL;
     }
 
     if (this->getNumRefs() > 1)
