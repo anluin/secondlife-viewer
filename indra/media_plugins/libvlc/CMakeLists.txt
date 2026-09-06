@@ -11,6 +11,7 @@ include(PluginAPI)
 
 include(LibVLCPlugin)
 
+if (LIBVLCPLUGIN)
 ### media_plugin_libvlc
 
 
@@ -48,3 +49,4 @@ if (DARWIN)
   )
 
 endif (DARWIN)
+endif (LIBVLCPLUGIN)

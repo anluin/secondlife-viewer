@@ -1860,9 +1860,12 @@ if (WINDOWS)
       ${viewer_APPSETTINGS_FILES}
       SLPlugin
       media_plugin_cef
-      media_plugin_libvlc
       media_plugin_example
       )
+
+    if (TARGET media_plugin_libvlc)
+        list(APPEND COPY_INPUT_DEPENDENCIES media_plugin_libvlc)
+    endif ()
 
     if (TARGET ll::discord_sdk)
         list(APPEND COPY_INPUT_DEPENDENCIES
@@ -2126,6 +2129,12 @@ if (TARGET ll::velopack)
    target_link_libraries(${VIEWER_BINARY_NAME} ll::velopack )
 endif ()
 
+if (TARGET media_plugin_libvlc)
+    # llappviewer shows the VLC version in the about box when the viewer
+    # is built with VLC support
+    target_compile_definitions(${VIEWER_BINARY_NAME} PRIVATE LIBVLCPLUGIN=1)
+endif ()
+
 if( TARGET ll::intel_memops )
     target_link_libraries(${VIEWER_BINARY_NAME} ll::intel_memops )
 endif()
@@ -2172,10 +2181,13 @@ if (LINUX)
     SLPlugin
     media_plugin_cef
     media_plugin_gstreamer10
-    media_plugin_libvlc
     media_plugin_example
     llwebrtc
     )
+
+  if (TARGET media_plugin_libvlc)
+    list(APPEND COPY_INPUT_DEPENDENCIES media_plugin_libvlc)
+  endif ()
 
   add_custom_command(
       OUTPUT ${product}.tar.xz
@@ -2303,7 +2315,10 @@ if (DARWIN)
       --versionfile=${CMAKE_CURRENT_BINARY_DIR}/viewer_version.txt
     )
 
-  add_dependencies(${VIEWER_BINARY_NAME} SLPlugin media_plugin_libvlc media_plugin_cef)
+  add_dependencies(${VIEWER_BINARY_NAME} SLPlugin media_plugin_cef)
+  if (TARGET media_plugin_libvlc)
+    add_dependencies(${VIEWER_BINARY_NAME} media_plugin_libvlc)
+  endif ()
 
   if (ENABLE_SIGNING)
       set(SIGNING_SETTING "--signature=${SIGNING_IDENTITY}")

@@ -1387,9 +1387,10 @@ class LinuxManifest(ViewerManifest):
                 with self.prefix(src='cef'):
                     self.path("libmedia_plugin_cef.so")
 
-                # Media plugins - LibVLC
+                # Media plugins - LibVLC (optional: viewer may be built
+                # with LIBVLCPLUGIN=OFF when VLC is not installed)
                 with self.prefix(src='libvlc'):
-                    self.path("libmedia_plugin_libvlc.so")
+                    self.path_optional("libmedia_plugin_libvlc.so")
 
                 # GStreamer 1.0 Media Plugin
                 with self.prefix(src='gstreamer10'):
