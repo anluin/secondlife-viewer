@@ -3525,7 +3525,9 @@ void LLMessageSystem::dumpPacketToLog()
     for (i = 0; i < mTrueReceiveSize; i++)
     {
         S32 offset = cur_line_pos * 3;
-        snprintf(line_buffer + offset, sizeof(line_buffer) - offset,
+        // each byte renders as exactly 3 chars plus NUL; line_buffer holds
+        // 16 such entries per line, so bound the write to the fixed expansion
+        snprintf(line_buffer + offset, sizeof "%02x ",
                  "%02x ", mTrueReceiveBuffer[i]);   /* Flawfinder: ignore */
         cur_line_pos++;
         if (cur_line_pos >= 16)

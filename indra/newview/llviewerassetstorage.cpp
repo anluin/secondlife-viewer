@@ -59,6 +59,14 @@ static const std::string VIEWER_ASSET_STORAGE_CORO_POOL = "AssetStorage";
  * only for fetch/get operations and its only function is to wrap remote
  * asset fetch requests so that they can be timed.
  */
+// GCC 16+ speculatively devirtualizes the delete of LLAssetRequest-typed
+// pointers here into ~LLViewerAssetRequest and then flags the (impossible)
+// speculated path as an out-of-bounds access of mMetricsStartTime, which
+// lives just past the end of a plain LLAssetRequest allocation.
+#if defined(LL_GNUC) && GCC_VERSION >= 160000
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Warray-bounds="
+#endif
 class LLViewerAssetRequest : public LLAssetRequest
 {
 public:
@@ -98,6 +106,9 @@ public:
     LLViewerAssetStats::duration_t      mMetricsStartTime;
     bool mWithHTTP;
 };
+#if defined(LL_GNUC) && GCC_VERSION >= 160000
+#   pragma GCC diagnostic pop
+#endif
 
 ///----------------------------------------------------------------------------
 /// LLViewerAssetStorage

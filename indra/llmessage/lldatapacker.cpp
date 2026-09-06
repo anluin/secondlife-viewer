@@ -725,7 +725,9 @@ void LLDataPackerBinaryBuffer::dumpBufferToLog()
     S32 cur_line = 0;
     for (i = 0; i < mBufferSize; i++)
     {
-        snprintf(line_buffer + cur_line_pos*3, sizeof(line_buffer) - cur_line_pos*3, "%02x ", mBufferp[i]);     /* Flawfinder: ignore */
+        // each byte renders as exactly 3 chars plus NUL; line_buffer holds
+        // 16 such entries per line, so bound the write to the fixed expansion
+        snprintf(line_buffer + cur_line_pos*3, sizeof "%02x ", "%02x ", mBufferp[i]);     /* Flawfinder: ignore */
         cur_line_pos++;
         if (cur_line_pos >= 16)
         {

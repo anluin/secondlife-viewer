@@ -730,12 +730,23 @@ void LLJoint::setDebugJointNames(const debug_joint_name_t& names)
 {
     s_debugJointNames = names;
 }
+
+// GCC 12-13 raise a -Wdangling-pointer false positive on the boost::split
+// into the set below (the analyzer chases libstdc++'s _Rb_tree::swap
+// temporaries); later GCC versions no longer do.
+#if defined(LL_GNUC) && GCC_VERSION >= 120000 && GCC_VERSION < 140000
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wdangling-pointer"
+#endif
 void LLJoint::setDebugJointNames(const std::string& names_string)
 {
     debug_joint_name_t names;
     boost::split(names, names_string, boost::is_any_of(" :,"));
     setDebugJointNames(names);
 }
+#if defined(LL_GNUC) && GCC_VERSION >= 120000 && GCC_VERSION < 140000
+#   pragma GCC diagnostic pop
+#endif
 
 //--------------------------------------------------------------------
 // getWorldPosition()
